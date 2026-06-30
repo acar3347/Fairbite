@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Fairbite",
+    "slug": "fairbite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "fairbite",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fairbite.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1A6B5A",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.fairbite.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-camera",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Adisyon fotoğrafı yüklemek için galeri erişimi gerekiyor.",
+          "cameraPermission": "Adisyon fotoğrafı çekmek için kamera erişimi gerekiyor."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Yakınındaki mekanları bulmak için konum erişimi gerekiyor."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
