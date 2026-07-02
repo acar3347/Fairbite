@@ -1,14 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
-
-const MOCK_PROFILE = {
-  username: 'kullanici42',
-  city: 'Mersin',
-  points: 320,
-  reviewCount: 14,
-  receiptCount: 8,
-};
+import { supabase } from '../../lib/supabase';
+import { useAuthStore } from '../../stores/authStore';
+import type { Profile } from '../../types/database';
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
@@ -20,28 +16,72 @@ function StatBox({ label, value }: { label: string; value: number }) {
 }
 
 export default function ProfileScreen() {
+  const { user, signOut } = useAuthStore();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user!.id)
+        .single();
+      if (error) throw error;
+      return data as Profile;
+    },
+    enabled: !!user,
+  });
+
+  const { data: reviewCount } = useQuery({
+    queryKey: ['review_count', user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('reviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const { data: receiptCount } = useQuery({
+    queryKey: ['receipt_count', user?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('receipts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user!.id);
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const displayName = profile?.username || user?.email?.split('@')[0] || 'kullanıcı';
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {MOCK_PROFILE.username[0].toUpperCase()}
-          </Text>
+          <Text style={styles.avatarText}>{displayName[0]?.toUpperCase()}</Text>
         </View>
-        <Text style={styles.username}>@{MOCK_PROFILE.username}</Text>
-        <Text style={styles.city}>{MOCK_PROFILE.city}</Text>
+        <Text style={styles.username}>@{displayName}</Text>
+        {profile?.city && <Text style={styles.city}>{profile.city}</Text>}
       </View>
 
       <View style={styles.statsRow}>
-        <StatBox label="Yorum" value={MOCK_PROFILE.reviewCount} />
-        <StatBox label="Adisyon" value={MOCK_PROFILE.receiptCount} />
-        <StatBox label="Puan" value={MOCK_PROFILE.points} />
+        <StatBox label="Yorum" value={reviewCount ?? 0} />
+        <StatBox label="Adisyon" value={receiptCount ?? 0} />
+        <StatBox label="Puan" value={profile?.points ?? 0} />
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Katkıda Bulunduklarım</Text>
         <Text style={styles.empty}>Henüz katkı yok.</Text>
       </View>
+
+      <Pressable style={styles.signOutButton} onPress={signOut}>
+        <Text style={styles.signOutText}>Çıkış Yap</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -60,4 +100,6 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: Colors.text, marginBottom: 8 },
   empty: { fontSize: 14, color: Colors.textSecondary },
+  signOutButton: { margin: 16, marginTop: 32, borderWidth: 1, borderColor: Colors.error, borderRadius: 12, padding: 14, alignItems: 'center' },
+  signOutText: { color: Colors.error, fontSize: 15, fontWeight: '600' },
 });
