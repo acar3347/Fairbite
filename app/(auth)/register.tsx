@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
+import { signInWithGoogle } from '../../lib/googleAuth';
 import { supabase } from '../../lib/supabase';
 
 export default function RegisterScreen() {
@@ -20,6 +21,20 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      router.replace('/(tabs)');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google ile giriş başarısız oldu.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleRegister = async () => {
     setError(null);
@@ -98,6 +113,22 @@ export default function RegisterScreen() {
           >
             <Text style={styles.buttonText}>{loading ? 'Kayıt oluyor...' : 'Kayıt Ol'}</Text>
           </Pressable>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>veya</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Pressable
+            style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={googleLoading}
+          >
+            <Text style={styles.googleButtonText}>
+              {googleLoading ? 'Bağlanıyor...' : 'Google ile Devam Et'}
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.footer}>
@@ -141,6 +172,19 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 18, gap: 10 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.border },
+  dividerText: { fontSize: 12, color: Colors.textSecondary },
+  googleButton: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleButtonText: { color: Colors.text, fontSize: 15, fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   footerText: { color: Colors.textSecondary, fontSize: 14 },
   footerLink: { color: Colors.primary, fontSize: 14, fontWeight: '700' },
