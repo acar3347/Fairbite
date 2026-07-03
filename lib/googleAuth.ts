@@ -1,11 +1,24 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle() {
   const redirectTo = AuthSession.makeRedirectUri();
+
+  if (Platform.OS === 'web') {
+    // Full-page redirect; Supabase's client parses the returned #access_token
+    // hash automatically (see detectSessionInUrl in lib/supabase.ts) once the
+    // browser navigates back here, so there's nothing else to do.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) throw error;
+    return;
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
